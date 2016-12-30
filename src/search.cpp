@@ -176,6 +176,16 @@ namespace {
 
 } // namespace
 
+int tna = 245;
+int tnb = 70;
+int tnc = 170;
+int tnd = 250;
+int tne = 200;
+TUNE(SetRange(0,500), tna);
+TUNE(SetRange(0,200), tnb);
+TUNE(SetRange(0,400), tnc);
+TUNE(SetRange(0,500), tnd);
+TUNE(SetRange(0,400), tne);
 
 /// Search::init() is called during startup to initialize various lookup tables
 
@@ -185,7 +195,7 @@ void Search::init() {
       for (int d = 1; d < 128; ++d)
           for (int mc = 1; mc < 64; ++mc)
           {
-              double r = 0.245 * d * (1.0 - exp(-7.0 / d)) * log(mc);
+              double r = (tna / 1000.0) * d * (1.0 - exp(-tnb / (10.0 * d))) * log(mc);
 
               Reductions[NonPV][imp][d][mc] = int(std::round(r));
               Reductions[PV][imp][d][mc] = std::max(Reductions[NonPV][imp][d][mc] - 1, 0);
@@ -398,7 +408,7 @@ void Thread::search() {
           if (rootDepth >= 5 * ONE_PLY)
           {
               Value prevScore = rootMoves[PVIdx].previousScore;
-              delta = Value(int(17.0 + 0.025 * abs(prevScore)));
+              delta = Value(int(tnc / 10.0 + (tnd / 10000.0) * abs(prevScore)));
               alpha = std::max(prevScore - delta,-VALUE_INFINITE);
               beta  = std::min(prevScore + delta, VALUE_INFINITE);
           }
@@ -996,7 +1006,7 @@ moves_loop: // When in check search starts from here
                   r += ONE_PLY;
 
               // Decrease/increase reduction for moves with a good/bad history
-              r = std::max(DEPTH_ZERO, (r / ONE_PLY - ss->history / 20000) * ONE_PLY);
+              r = std::max(DEPTH_ZERO, (r / ONE_PLY - ss->history / (100 * tne)) * ONE_PLY);
           }
 
           Depth d = std::max(newDepth - r, ONE_PLY);
