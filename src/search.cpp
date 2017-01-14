@@ -176,6 +176,19 @@ namespace {
 
 } // namespace
 
+int tmh = 238;
+int tmi = 140;
+int tmj = 120;
+int tmk = 179;
+int tml = 115;
+int tmm = 130;
+
+TUNE(SetRange(100,400), tmh);
+TUNE(SetRange(70,210), tmi);
+TUNE(SetRange(60,180), tmj);
+TUNE(SetRange(80,320), tmk);
+TUNE(SetRange(60,170), tml);
+TUNE(SetRange(60,200), tmm);
 
 /// Search::init() is called during startup to initialize various lookup tables
 
@@ -499,8 +512,8 @@ void Thread::search() {
               int scoreDiff = mainThread->previousScore - bestValue;
 
               int improvingFactor = mainThread->failedLow
-                                    ? 476 + int(140 * atan(scoreDiff / 12.0))
-                                    : 357 + int(115 * atan(scoreDiff / 13.0));
+                                    ? 2 * tmh + int(tmi * atan(scoreDiff / (tmj / 10.0)))
+                                    : 2 * tmk + int(tml * atan(scoreDiff / (tmm / 10.0)));
               double unstablePvFactor = 1 + mainThread->bestMoveChanges;
 
               bool doEasyMove =   rootMoves[0].pv[0] == easyMove

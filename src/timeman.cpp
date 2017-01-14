@@ -28,6 +28,22 @@
 
 TimeManagement Time; // Our global time management object
 
+int tma = 140;
+int tmb = 180;
+int tmc = 148;
+int tmd = 144;
+int tme = 180;
+int tmf = 200;
+int tmg = 233;
+
+TUNE(SetRange(50,230), tma);
+TUNE(SetRange(50,310), tmb);
+TUNE(SetRange(50,246), tmc);
+TUNE(SetRange(50,238), tmd);
+TUNE(SetRange(50,310), tme);
+TUNE(SetRange(0,500), tmf);
+TUNE(SetRange(100,400), tmg);
+
 namespace {
 
   enum TimeType { OptimumTime, MaxTime };
@@ -58,13 +74,13 @@ namespace {
     {
         /// In sudden death case we increase usage of remaining time as the game goes on. This is controlled by parameter sd.
 
-        sd = 1.0 + 14.0 * mn / (500.0 + mn);
-        TRatio = (T == OptimumTime ? 0.018 : 0.074) * sd;
+        sd = 1.0 + tma / 10.0 * mn / (500.0 + mn);
+        TRatio = (T == OptimumTime ? tmb / 10000.0 : tmc / 2000.0) * sd;
     }
     
     /// In the case of no increment we simply have ratio = std::min(1.0, TRatio); The usage of increment follows a normal distribution with the maximum around move 20.
     
-    double incUsage = 48.0 + 60.0 * gauss(mn, 20.0, 465.0);
+    double incUsage = tmd / 3.0 + tme / 3.0 * gauss(mn, tmf / 10.0, tmg * 2.0);
     double ratio = std::min(1.0, TRatio * (1.0 + incUsage * myInc / (myTime * sd)));
     int hypMyTime = std::max(0, myTime - moveOverhead);
 
