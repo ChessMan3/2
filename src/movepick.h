@@ -65,7 +65,7 @@ struct Stats {
   void update(Piece pc, Square to, Move m) { table[pc][to] = m; }
   void update(Piece pc, Square to, Value v) {
 
-    table[pc][to] -= table[pc][to] / 32;
+    table[pc][to] -= table[pc][to] / 64;
     table[pc][to] += int(v);
   }
 
