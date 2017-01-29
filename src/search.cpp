@@ -78,8 +78,7 @@ namespace {
   // History and stats update bonus, based on depth
   Value stat_bonus(Depth depth) {
     int d = depth / ONE_PLY ;
-    int A = 23;
-    return  (d < 10) ? Value(A * d * d) : Value(81 * A + int(18 * A * log(d - 8)));
+    return  Value(int(3000 * exp(-8.5 / d) * (1 + 8.5 / d)));
   }
 
   // Skill structure is used to implement strength limit
@@ -1001,8 +1000,7 @@ moves_loop: // When in check search starts from here
               ss->history =  (cmh  ? (*cmh )[moved_piece][to_sq(move)] : VALUE_ZERO)
                            + (fmh  ? (*fmh )[moved_piece][to_sq(move)] : VALUE_ZERO)
                            + (fmh2 ? (*fmh2)[moved_piece][to_sq(move)] : VALUE_ZERO)
-                           + thisThread->history.get(~pos.side_to_move(), move)
-                           - 4000; // Correction factor
+                           + thisThread->history.get(~pos.side_to_move(), move);
 
               // Decrease/increase reduction by comparing opponent's stat score
               if (ss->history > VALUE_ZERO && (ss-1)->history < VALUE_ZERO)
