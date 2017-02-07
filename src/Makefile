@@ -139,9 +139,9 @@ endif
 
 ### 3.1 Selecting compiler (default = gcc)
 
-CXXFLAGS += -Wall -Wcast-qual -fno-exceptions -fno-rtti -std=c++11 $(EXTRACXXFLAGS)
-DEPENDFLAGS += -std=c++11
-LDFLAGS += $(EXTRALDFLAGS)
+CFLAGS += -Wall -std=c11 $(EXTRACFLAGS)
+DEPENDFLAGS += -std=c11
+LDFLAGS += $(EXTRALDFLAGS) -lm
 
 ifeq ($(COMP),)
 	COMP=gcc
