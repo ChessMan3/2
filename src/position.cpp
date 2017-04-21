@@ -2,7 +2,7 @@
   Stockfish, a UCI chess playing engine derived from Glaurung 2.1
   Copyright (C) 2004-2008 Tord Romstad (Glaurung author)
   Copyright (C) 2008-2015 Marco Costalba, Joona Kiiski, Tord Romstad
-  Copyright (C) 2015-2017 Marco Costalba, Joona Kiiski, Gary Linscott, Tord Romstad
+  Copyright (C) 2015-2016 Marco Costalba, Joona Kiiski, Gary Linscott, Tord Romstad
 
   Stockfish is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -45,7 +45,7 @@ namespace Zobrist {
   Key psq[PIECE_NB][SQUARE_NB];
   Key enpassant[FILE_NB];
   Key castling[CASTLING_RIGHT_NB];
-  Key side, noPawns;
+  Key side;
 }
 
 namespace {
@@ -86,7 +86,7 @@ PieceType min_attacker<KING>(const Bitboard*, Square, Bitboard, Bitboard&, Bitbo
 
 /// operator<<(Position) returns an ASCII representation of the position
 
-std::ostream& operator<<(std::ostream& os, const Position& pos) {
+std::ostream& operator<<(std::ostream& os, Position& pos) {
 
   os << "\n +---+---+---+---+---+---+---+---+\n";
 
@@ -108,12 +108,9 @@ std::ostream& operator<<(std::ostream& os, const Position& pos) {
   if (    int(Tablebases::MaxCardinality) >= popcount(pos.pieces())
       && !pos.can_castle(ANY_CASTLING))
   {
-      StateInfo st;
-      Position p;
-      p.set(pos.fen(), pos.is_chess960(), &st, pos.this_thread());
       Tablebases::ProbeState s1, s2;
-      Tablebases::WDLScore wdl = Tablebases::probe_wdl(p, &s1);
-      int dtz = Tablebases::probe_dtz(p, &s2);
+      Tablebases::WDLScore wdl = Tablebases::probe_wdl(pos, &s1);
+      int dtz = Tablebases::probe_dtz(pos, &s2);
       os << "\nTablebases WDL: " << std::setw(4) << wdl << " (" << s1 << ")"
          << "\nTablebases DTZ: " << std::setw(4) << dtz << " (" << s2 << ")";
   }
@@ -148,7 +145,6 @@ void Position::init() {
   }
 
   Zobrist::side = rng.rand<Key>();
-  Zobrist::noPawns = rng.rand<Key>();
 }
 
 
@@ -335,8 +331,7 @@ void Position::set_check_info(StateInfo* si) const {
 
 void Position::set_state(StateInfo* si) const {
 
-  si->key = si->materialKey = 0;
-  si->pawnKey = Zobrist::noPawns;
+  si->key = si->pawnKey = si->materialKey = 0;
   si->nonPawnMaterial[WHITE] = si->nonPawnMaterial[BLACK] = VALUE_ZERO;
   si->psq = SCORE_ZERO;
   si->checkersBB = attackers_to(square<KING>(sideToMove)) & pieces(~sideToMove);
@@ -1079,30 +1074,25 @@ bool Position::see_ge(Move m, Value v) const {
 /// Position::is_draw() tests whether the position is drawn by 50-move rule
 /// or by repetition. It does not detect stalemates.
 
-bool Position::is_draw(int ply) const {
+bool Position::is_draw() const {
 
   if (st->rule50 > 99 && (!checkers() || MoveList<LEGAL>(*this).size()))
       return true;
 
-  int end = std::min(st->rule50, st->pliesFromNull);
+  int e = std::min(st->rule50, st->pliesFromNull);
 
-  if (end < 4)
+  if (e < 4)
     return false;
 
   StateInfo* stp = st->previous->previous;
-  int cnt = 0;
 
-  for (int i = 4; i <= end; i += 2)
-  {
+  do {
       stp = stp->previous->previous;
 
-      // At root position ply is 1, so return a draw score if a position
-      // repeats once earlier but after or at the root, or repeats twice
-      // strictly before the root.
-      if (   stp->key == st->key
-          && ++cnt + (ply - i > 0) == 2)
-          return true;
-  }
+      if (stp->key == st->key)
+          return true; // Draw at first repetition
+
+  } while ((e -= 2) >= 4);
 
   return false;
 }
