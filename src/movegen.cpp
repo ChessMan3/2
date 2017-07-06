@@ -1,15 +1,15 @@
 /*
-  Stockfish, a UCI chess playing engine derived from Glaurung 2.1
+  SugaR, a UCI chess playing engine derived from Stockfish
   Copyright (C) 2004-2008 Tord Romstad (Glaurung author)
   Copyright (C) 2008-2015 Marco Costalba, Joona Kiiski, Tord Romstad
   Copyright (C) 2015-2017 Marco Costalba, Joona Kiiski, Gary Linscott, Tord Romstad
 
-  Stockfish is free software: you can redistribute it and/or modify
+  SugaR is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
 
-  Stockfish is distributed in the hope that it will be useful,
+  SugaR is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
@@ -80,7 +80,7 @@ namespace {
 
     // Knight promotion is the only promotion that can give a direct check
     // that's not already included in the queen promotion.
-    if (Type == QUIET_CHECKS && (StepAttacksBB[W_KNIGHT][to] & ksq))
+    if (Type == QUIET_CHECKS && (PseudoAttacks[KNIGHT][to] & ksq))
         *moveList++ = make<PROMOTION>(to - D, to, KNIGHT);
     else
         (void)ksq; // Silence a warning under MSVC
@@ -346,7 +346,7 @@ ExtMove* generate<QUIET_CHECKS>(const Position& pos, ExtMove* moveList) {
      if (pt == PAWN)
          continue; // Will be generated together with direct checks
 
-     Bitboard b = pos.attacks_from(Piece(pt), from) & ~pos.pieces();
+     Bitboard b = pos.attacks_from(pt, from) & ~pos.pieces();
 
      if (pt == KING)
          b &= ~PseudoAttacks[QUEEN][pos.square<KING>(~us)];

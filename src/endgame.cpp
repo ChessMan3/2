@@ -1,15 +1,15 @@
 /*
-  Stockfish, a UCI chess playing engine derived from Glaurung 2.1
+  SugaR, a UCI chess playing engine derived from Stockfish
   Copyright (C) 2004-2008 Tord Romstad (Glaurung author)
   Copyright (C) 2008-2015 Marco Costalba, Joona Kiiski, Tord Romstad
   Copyright (C) 2015-2017 Marco Costalba, Joona Kiiski, Gary Linscott, Tord Romstad
 
-  Stockfish is free software: you can redistribute it and/or modify
+  SugaR is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
 
-  Stockfish is distributed in the hope that it will be useful,
+  SugaR is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
@@ -107,14 +107,6 @@ Endgames::Endgames() {
   add<KBPKN>("KBPKN");
   add<KBPPKB>("KBPPKB");
   add<KRPPKRP>("KRPPKRP");
-}
-
-
-template<EndgameType E, typename T>
-void Endgames::add(const string& code) {
-  StateInfo st;
-  map<T>()[Position().set(code, WHITE, &st).material_key()] = std::unique_ptr<EndgameBase<T>>(new Endgame<E>(WHITE));
-  map<T>()[Position().set(code, BLACK, &st).material_key()] = std::unique_ptr<EndgameBase<T>>(new Endgame<E>(BLACK));
 }
 
 
@@ -606,7 +598,7 @@ ScaleFactor Endgame<KPsK>::operator()(const Position& pos) const {
 
   // If all pawns are ahead of the king, on a single rook file and
   // the king is within one file of the pawns, it's a draw.
-  if (   !(pawns & ~in_front_bb(weakSide, rank_of(ksq)))
+  if (   !(pawns & ~forward_ranks_bb(weakSide, ksq))
       && !((pawns & ~FileABB) && (pawns & ~FileHBB))
       &&  distance<File>(ksq, lsb(pawns)) <= 1)
       return SCALE_FACTOR_DRAW;
@@ -652,8 +644,8 @@ ScaleFactor Endgame<KBPKB>::operator()(const Position& pos) const {
 
       if (relative_rank(strongSide, pawnSq) <= RANK_5)
           return SCALE_FACTOR_DRAW;
-      
-      Bitboard path = forward_bb(strongSide, pawnSq);
+
+      Bitboard path = forward_file_bb(strongSide, pawnSq);
 
       if (path & pos.pieces(weakSide, KING))
           return SCALE_FACTOR_DRAW;
@@ -788,7 +780,7 @@ ScaleFactor Endgame<KNPKB>::operator()(const Position& pos) const {
 
   // King needs to get close to promoting pawn to prevent knight from blocking.
   // Rules for this are very tricky, so just approximate.
-  if (forward_bb(strongSide, pawnSq) & pos.attacks_from<BISHOP>(bishopSq))
+  if (forward_file_bb(strongSide, pawnSq) & pos.attacks_from<BISHOP>(bishopSq))
       return ScaleFactor(distance(weakKingSq, pawnSq));
 
   return SCALE_FACTOR_NONE;

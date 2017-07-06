@@ -1,15 +1,15 @@
 /*
-  Stockfish, a UCI chess playing engine derived from Glaurung 2.1
+  SugaR, a UCI chess playing engine derived from Stockfish
   Copyright (C) 2004-2008 Tord Romstad (Glaurung author)
   Copyright (C) 2008-2015 Marco Costalba, Joona Kiiski, Tord Romstad
   Copyright (C) 2015-2017 Marco Costalba, Joona Kiiski, Gary Linscott, Tord Romstad
 
-  Stockfish is free software: you can redistribute it and/or modify
+  SugaR is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
 
-  Stockfish is distributed in the hope that it will be useful,
+  SugaR is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
@@ -90,6 +90,7 @@ public:
   Square ep_square() const;
   bool empty(Square s) const;
   template<PieceType Pt> int count(Color c) const;
+  template<PieceType Pt> int count() const;
   template<PieceType Pt> const Square* squares(Color c) const;
   template<PieceType Pt> Square square(Color c) const;
 
@@ -108,7 +109,7 @@ public:
   // Attacks to/from a given square
   Bitboard attackers_to(Square s) const;
   Bitboard attackers_to(Square s, Bitboard occupied) const;
-  Bitboard attacks_from(Piece pc, Square s) const;
+  Bitboard attacks_from(PieceType pt, Square s) const;
   template<PieceType> Bitboard attacks_from(Square s) const;
   template<PieceType> Bitboard attacks_from(Square s, Color c) const;
   Bitboard slider_blockers(Bitboard sliders, Square s, Bitboard& pinners) const;
@@ -135,7 +136,7 @@ public:
   void undo_null_move();
 
   // Static Exchange Evaluation
-  bool see_ge(Move m, Value value) const;
+  bool see_ge(Move m, Value threshold = VALUE_ZERO) const;
 
   // Accessing hash keys
   Key key() const;
@@ -149,14 +150,14 @@ public:
   int game_ply() const;
   bool is_chess960() const;
   Thread* this_thread() const;
-  uint64_t nodes_searched() const;
   bool is_draw(int ply) const;
   int rule50_count() const;
   Score psq_score() const;
   Value non_pawn_material(Color c) const;
+  Value non_pawn_material() const;
 
   // Position consistency check, for debugging
-  bool pos_is_ok(int* failedStep = nullptr) const;
+  bool pos_is_ok() const;
   void flip();
 
 private:
@@ -182,7 +183,6 @@ private:
   int castlingRightsMask[SQUARE_NB];
   Square castlingRookSquare[CASTLING_RIGHT_NB];
   Bitboard castlingPath[CASTLING_RIGHT_NB];
-  uint64_t nodes;
   int gamePly;
   Color sideToMove;
   Thread* thisThread;
@@ -236,6 +236,10 @@ template<PieceType Pt> inline int Position::count(Color c) const {
   return pieceCount[make_piece(c, Pt)];
 }
 
+template<PieceType Pt> inline int Position::count() const {
+  return pieceCount[make_piece(WHITE, Pt)] + pieceCount[make_piece(BLACK, Pt)];
+}
+
 template<PieceType Pt> inline const Square* Position::squares(Color c) const {
   return pieceList[make_piece(c, Pt)];
 }
@@ -267,18 +271,19 @@ inline Square Position::castling_rook_square(CastlingRight cr) const {
 
 template<PieceType Pt>
 inline Bitboard Position::attacks_from(Square s) const {
+  assert(Pt != PAWN);
   return  Pt == BISHOP || Pt == ROOK ? attacks_bb<Pt>(s, byTypeBB[ALL_PIECES])
         : Pt == QUEEN  ? attacks_from<ROOK>(s) | attacks_from<BISHOP>(s)
-        : StepAttacksBB[Pt][s];
+        : PseudoAttacks[Pt][s];
 }
 
 template<>
 inline Bitboard Position::attacks_from<PAWN>(Square s, Color c) const {
-  return StepAttacksBB[make_piece(c, PAWN)][s];
+  return PawnAttacks[c][s];
 }
 
-inline Bitboard Position::attacks_from(Piece pc, Square s) const {
-  return attacks_bb(pc, s, byTypeBB[ALL_PIECES]);
+inline Bitboard Position::attacks_from(PieceType pt, Square s) const {
+  return attacks_bb(pt, s, byTypeBB[ALL_PIECES]);
 }
 
 inline Bitboard Position::attackers_to(Square s) const {
@@ -330,16 +335,16 @@ inline Value Position::non_pawn_material(Color c) const {
   return st->nonPawnMaterial[c];
 }
 
+inline Value Position::non_pawn_material() const {
+  return st->nonPawnMaterial[WHITE] + st->nonPawnMaterial[BLACK];
+}
+
 inline int Position::game_ply() const {
   return gamePly;
 }
 
 inline int Position::rule50_count() const {
   return st->rule50;
-}
-
-inline uint64_t Position::nodes_searched() const {
-  return nodes;
 }
 
 inline bool Position::opposite_bishops() const {

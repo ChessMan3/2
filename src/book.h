@@ -18,37 +18,35 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <iostream>
+/*
+  The code in this file is based on the opening book code in PolyGlot
+  by Fabien Letouzey. PolyGlot is available under the GNU General
+  Public License, and can be downloaded from http://wbec-ridderkerk.nl
+ */
 
-#include "bitboard.h"
-#include "evaluate.h"
+#ifndef BOOK_H_INCLUDED
+#define BOOK_H_INCLUDED
+
+#include <fstream>
+#include <string>
+
+#include "misc.h"
 #include "position.h"
-#include "search.h"
-#include "thread.h"
-#include "uci.h"
-#include "syzygy/tbprobe.h"
-#include "tzbook.h"
 
-namespace PSQT {
-  void init();
-}
+class PolyglotBook : private std::ifstream {
+public:
+  PolyglotBook();
+ ~PolyglotBook();
+  Move probe(const Position& pos, const std::string& fName, bool pickBest);
 
-int main(int argc, char* argv[]) {
+private:
+  template<typename T> PolyglotBook& operator>>(T& n);
 
-  std::cout << engine_info() << std::endl;
+  bool open(const char* fName);
+  size_t find_first(Key key);
 
-  UCI::init(Options);
-  PSQT::init();
-  Bitboards::init();
-  Position::init();
-  Bitbases::init();
-  Eval::init();
-  Search::init();
-  Pawns::init();
-  Threads.init();
-  tzbook.init(Options["BookPath"]);
-  UCI::loop(argc, argv);
+  PRNG rng;
+  std::string fileName;
+};
 
-  Threads.exit();
-  return 0;
-}
+#endif // #ifndef BOOK_H_INCLUDED

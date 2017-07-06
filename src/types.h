@@ -1,15 +1,15 @@
 /*
-  Stockfish, a UCI chess playing engine derived from Glaurung 2.1
+  SugaR, a UCI chess playing engine derived from Stockfish
   Copyright (C) 2004-2008 Tord Romstad (Glaurung author)
   Copyright (C) 2008-2015 Marco Costalba, Joona Kiiski, Tord Romstad
   Copyright (C) 2015-2017 Marco Costalba, Joona Kiiski, Gary Linscott, Tord Romstad
 
-  Stockfish is free software: you can redistribute it and/or modify
+  SugaR is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
 
-  Stockfish is distributed in the hope that it will be useful,
+  SugaR is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
@@ -76,7 +76,7 @@
 #  include <immintrin.h> // Header for _pext_u64() intrinsic
 #  define pext(b, m) _pext_u64(b, m)
 #else
-#  define pext(b, m) (0)
+#  define pext(b, m) 0
 #endif
 
 #ifdef USE_POPCNT
@@ -135,7 +135,7 @@ enum CastlingSide {
   KING_SIDE, QUEEN_SIDE, CASTLING_SIDE_NB = 2
 };
 
-enum CastlingRight {
+enum CastlingRight {  // Defined as in PolyGlot book hash key
   NO_CASTLING,
   WHITE_OO,
   WHITE_OOO = WHITE_OO << 1,
@@ -155,6 +155,11 @@ enum Phase {
   PHASE_ENDGAME,
   PHASE_MIDGAME = 128,
   MG = 0, EG = 1, PHASE_NB = 2
+};
+
+enum SearchStage {
+  MAIN_THREAD_SEARCH = 0,
+  SEARCH = 1
 };
 
 enum ScaleFactor {
@@ -184,10 +189,10 @@ enum Value : int {
   VALUE_MATED_IN_MAX_PLY = -VALUE_MATE + 2 * MAX_PLY,
 
   PawnValueMg   = 188,   PawnValueEg   = 248,
-  KnightValueMg = 753,   KnightValueEg = 832,
-  BishopValueMg = 826,   BishopValueEg = 897,
-  RookValueMg   = 1285,  RookValueEg   = 1371,
-  QueenValueMg  = 2513,  QueenValueEg  = 2650,
+  KnightValueMg = 764,   KnightValueEg = 848,
+  BishopValueMg = 826,   BishopValueEg = 891,
+  RookValueMg   = 1282,  RookValueEg   = 1373,
+  QueenValueMg  = 2526,  QueenValueEg  = 2646,
 
   MidgameLimit  = 15258, EndgameLimit  = 3915
 };
@@ -205,8 +210,6 @@ enum Piece {
   PIECE_NB = 16
 };
 
-const Piece Pieces[] = { W_PAWN, W_KNIGHT, W_BISHOP, W_ROOK, W_QUEEN, W_KING,
-                         B_PAWN, B_KNIGHT, B_BISHOP, B_ROOK, B_QUEEN, B_KING };
 extern Value PieceValue[PHASE_NB][PIECE_NB];
 
 enum Depth : int {
@@ -239,8 +242,8 @@ enum Square {
 
   NORTH =  8,
   EAST  =  1,
-  SOUTH = -8,
-  WEST  = -1,
+  SOUTH = -NORTH,
+  WEST  = -EAST,
 
   NORTH_EAST = NORTH + EAST,
   SOUTH_EAST = SOUTH + EAST,
@@ -331,6 +334,7 @@ inline Score operator/(Score s, int i) {
 
 /// Multiplication of a Score by an integer. We check for overflow in debug mode.
 inline Score operator*(Score s, int i) {
+
   Score result = Score(int(s) * i);
 
   assert(eg_value(result) == (i * eg_value(s)));
@@ -420,6 +424,10 @@ inline Square from_sq(Move m) {
 
 inline Square to_sq(Move m) {
   return Square(m & 0x3F);
+}
+
+inline int from_to(Move m) {
+ return m & 0xFFF;
 }
 
 inline MoveType type_of(Move m) {

@@ -1,15 +1,15 @@
 /*
-  Stockfish, a UCI chess playing engine derived from Glaurung 2.1
+  SugaR, a UCI chess playing engine derived from Stockfish
   Copyright (C) 2004-2008 Tord Romstad (Glaurung author)
   Copyright (C) 2008-2015 Marco Costalba, Joona Kiiski, Tord Romstad
   Copyright (C) 2015-2017 Marco Costalba, Joona Kiiski, Gary Linscott, Tord Romstad
 
-  Stockfish is free software: you can redistribute it and/or modify
+  SugaR is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
 
-  Stockfish is distributed in the hope that it will be useful,
+  SugaR is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
@@ -20,6 +20,8 @@
 
 #ifndef MOVEGEN_H_INCLUDED
 #define MOVEGEN_H_INCLUDED
+
+#include <algorithm>
 
 #include "types.h"
 
@@ -36,7 +38,7 @@ enum GenType {
 
 struct ExtMove {
   Move move;
-  Value value;
+  int value;
 
   operator Move() const { return move; }
   void operator=(Move m) { move = m; }
@@ -59,8 +61,7 @@ struct MoveList {
   const ExtMove* end() const { return last; }
   size_t size() const { return last - moveList; }
   bool contains(Move move) const {
-    for (const auto& m : *this) if (m == move) return true;
-    return false;
+    return std::find(begin(), end(), move) != end();
   }
 
 private:

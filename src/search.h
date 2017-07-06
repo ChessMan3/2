@@ -1,15 +1,15 @@
 /*
-  Stockfish, a UCI chess playing engine derived from Glaurung 2.1
+  SugaR, a UCI chess playing engine derived from Stockfish
   Copyright (C) 2004-2008 Tord Romstad (Glaurung author)
   Copyright (C) 2008-2015 Marco Costalba, Joona Kiiski, Tord Romstad
   Copyright (C) 2015-2017 Marco Costalba, Joona Kiiski, Gary Linscott, Tord Romstad
 
-  Stockfish is free software: you can redistribute it and/or modify
+  SugaR is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
 
-  Stockfish is distributed in the hope that it will be useful,
+  SugaR is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
@@ -38,13 +38,13 @@ namespace Search {
 
 struct Stack {
   Move* pv;
-  CounterMoveStats* counterMoves;
+  PieceToHistory* history;
   int ply;
   Move currentMove;
   Move excludedMove;
   Move killers[2];
   Value staticEval;
-  Value history;
+  int statScore;
   int moveCount;
 };
 
@@ -56,10 +56,12 @@ struct Stack {
 struct RootMove {
 
   explicit RootMove(Move m) : pv(1, m) {}
-
-  bool operator<(const RootMove& m) const { return m.score < score; } // Descending sort
-  bool operator==(const Move& m) const { return pv[0] == m; }
   bool extract_ponder_from_tt(Position& pos);
+  bool operator==(const Move& m) const { return pv[0] == m; }
+  bool operator<(const RootMove& m) const { // Sort in descending order
+    return m.score != score ? m.score < score
+                            : m.previousScore < previousScore;
+  }
 
   Value score = -VALUE_INFINITE;
   Value previousScore = -VALUE_INFINITE;
