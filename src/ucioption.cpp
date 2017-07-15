@@ -30,7 +30,6 @@
 #include "tt.h"
 #include "uci.h"
 #include "syzygy/tbprobe.h"
-#include "tzbook.h"
 
 using std::string;
 
@@ -46,8 +45,6 @@ void on_large_pages(const Option& o) { TT.resize(o); }  // warning is ok, will b
 void on_logger(const Option& o) { start_logger(o); }
 void on_threads(const Option&) { Threads.read_uci_options(); }
 void on_tb_path(const Option& o) { Tablebases::init(o); }
-void on_brainbook_path(const Option& o) { tzbook.init(o); }
-void on_book_move2_prob(const Option& o) { tzbook.set_book_move2_probability(o); }
 
 
 /// Our case insensitive less() function as required by UCI protocol
@@ -70,7 +67,6 @@ void init(OptionsMap& o) {
   o["Tactical Mode"]          << Option(false);
   o["Debug Log File"]         << Option("", on_logger);
   o["Contempt"]               << Option(0, -100, 100);
-  o["OwnBook"]                << Option(false);
   o["Threads"]                << Option(n, 1, 512, on_threads);
   o["Hash"]                   << Option(16, 1, MaxHashMB, on_hash_size);
   o["Clear Hash"]             << Option(on_clear_hash);
@@ -99,8 +95,6 @@ void init(OptionsMap& o) {
   o["MaxLMR"]                 << Option(10, 0, 20);
   o["MultiPV"]                << Option(1, 1, 500);
   o["Skill Level"]            << Option(20, 0, 20);
-  o["Best Book Move"]         << Option(false);
-  o["Book File"]              << Option("book.bin");
   o["Move Overhead"]          << Option(30, 0, 5000);
   o["Minimum Thinking Time"]  << Option(20, 0, 5000);
   o["Large Pages"]            << Option(true, on_large_pages);
@@ -111,9 +105,6 @@ void init(OptionsMap& o) {
   o["SyzygyProbeDepth"]       << Option(1, 1, 100);
   o["Syzygy50MoveRule"]       << Option(true);
   o["SyzygyProbeLimit"]       << Option(6, 0, 6);
-  o["Cerebellum Library"]     << Option();
-  o["Book Move2 Probability"] << Option(0, 0, 100, on_book_move2_prob);
-  o["BookPath"]               << Option("<empty>", on_brainbook_path);
 }
 
 

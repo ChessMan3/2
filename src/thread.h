@@ -26,7 +26,6 @@
 #include <mutex>
 #include <thread>
 #include <vector>
-#include <iostream>
 
 #include "material.h"
 #include "movepick.h"
